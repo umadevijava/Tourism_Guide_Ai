@@ -146,6 +146,17 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# Model files (large binary files)
+models/
+*.gguf
+*.bin
+*.pt
+*.pth
+*.model
+
+# Node modules
+node_modules/
+
 # Pyre type checker
 .pyre/
 
