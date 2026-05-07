@@ -250,7 +250,7 @@ class Chroma:
         Returns:
             list[str]: List of IDs of the added chunks.
         """
-        texts = [clean(doc.page_content, no_emoji=True) for doc in chunks]
+        texts = [clean(doc.page_content) for doc in chunks]
         metadata = [doc.metadata for doc in chunks]
         return self.from_texts(
             texts=texts,

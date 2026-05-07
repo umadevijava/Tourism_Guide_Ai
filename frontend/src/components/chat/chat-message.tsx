@@ -4,10 +4,12 @@ import { Bot, User } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 
 export interface Message {
-  id: string
-  role: "user" | "assistant"
-  content: string
+  id: number
+  text: string
+  sender: "user" | "bot"
+  timestamp: Date
   isStreaming?: boolean
+  requestId?: string
 }
 
 interface ChatMessageProps {
@@ -15,7 +17,7 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
-  const isUser = message.role === "user"
+  const isUser = message.sender === "user"
 
   return (
     <div
@@ -50,11 +52,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
             : "bg-message-ai border border-border/30"
         )}
       >
-        {message.isStreaming && !message.content ? (
+        {message.isStreaming && !message.text ? (
           <TypingIndicator />
         ) : (
           <div className="prose prose-invert prose-sm max-w-none">
             <ReactMarkdown
+              children={message.text}
               components={{
                 p: ({ children }) => (
                   <p className="text-foreground/90 leading-relaxed mb-2 last:mb-0">
@@ -113,10 +116,8 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   </blockquote>
                 ),
               }}
-            >
-              {message.content}
-            </ReactMarkdown>
-            {message.isStreaming && message.content && (
+            />
+            {message.isStreaming && message.text && (
               <span className="inline-block w-2 h-5 bg-primary ml-1 animate-pulse" />
             )}
           </div>

@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "chatbot" }]
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = ">=3.12"
 torch = [
     { version = "~=2.10.0", source = "pytorch", platform = "!=darwin" },
     { version = "~=2.10.0", source = "PyPI", platform = "darwin" }

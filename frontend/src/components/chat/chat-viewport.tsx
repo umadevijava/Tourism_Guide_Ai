@@ -45,10 +45,10 @@ function EmptyState() {
         {/* Welcome Text */}
         <div className="space-y-3">
           <h1 className="text-3xl font-semibold text-foreground tracking-tight text-balance">
-            Welcome to Autara AI
+            Welcome to Tourism Guide AI
           </h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-md mx-auto text-pretty">
-            Your intelligent assistant for conversations, document Q&A, and research.
+            Your AI-powered travel planning assistant. Get personalized recommendations, itineraries, and budget guides.
           </p>
         </div>
 

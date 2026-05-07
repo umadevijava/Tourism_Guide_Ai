@@ -15,6 +15,8 @@ from chatbot.bot.client.prompt import (
     REFINED_CTX_PROMPT_TEMPLATE,
     REFINED_QUESTION_CONVERSATION_AWARENESS_PROMPT_TEMPLATE,
     TOOL_SYSTEM_TEMPLATE,
+    TOURISM_SYSTEM_TEMPLATE,
+    TOURISM_CTX_PROMPT_TEMPLATE,
     generate_conversation_awareness_prompt,
     generate_ctx_prompt,
     generate_qa_prompt,
@@ -22,6 +24,7 @@ from chatbot.bot.client.prompt import (
 )
 from chatbot.bot.model.base_model import ModelSettings
 from chatbot.helpers.log import experimental
+from chatbot.helpers.prompt_loader import PromptLoader
 
 
 class LamaCppClient:
@@ -321,3 +324,67 @@ class LamaCppClient:
             question=question,
             chat_history=chat_history,
         )
+
+    @staticmethod
+    def generate_tourism_ctx_prompt(question: str, context: str) -> str:
+        """
+        Generates a tourism-specific context-based prompt with structured output format.
+
+        Args:
+            question (str): The question for which the prompt is generated.
+            context (str): The context information for the prompt.
+
+        Returns:
+            str: The generated tourism context-based prompt.
+        """
+        return generate_ctx_prompt(
+            template=TOURISM_CTX_PROMPT_TEMPLATE,
+            question=question,
+            context=context,
+        )
+
+    @staticmethod
+    def get_system_template(chatbot_mode: str = "general") -> str:
+        """
+        Get the appropriate system template based on chatbot mode.
+
+        Args:
+            chatbot_mode (str): The chatbot mode ("tourism", "general", etc.)
+
+        Returns:
+            str: The system template for the specified mode
+        """
+        if chatbot_mode.lower() == "tourism":
+            return TOURISM_SYSTEM_TEMPLATE
+        return TOOL_SYSTEM_TEMPLATE
+
+    @staticmethod
+    def get_ctx_template(chatbot_mode: str = "general") -> str:
+        """
+        Get the appropriate context prompt template based on chatbot mode.
+
+        Args:
+            chatbot_mode (str): The chatbot mode ("tourism", "general", etc.)
+
+        Returns:
+            str: The context prompt template for the specified mode
+        """
+        if chatbot_mode.lower() == "tourism":
+            return TOURISM_CTX_PROMPT_TEMPLATE
+        return CTX_PROMPT_TEMPLATE
+
+    def generate_ctx_prompt_with_mode(self, question: str, context: str, chatbot_mode: str = "general") -> str:
+        """
+        Generates a context-based prompt using the appropriate template based on chatbot mode.
+
+        Args:
+            question (str): The question for which the prompt is generated.
+            context (str): The context information for the prompt.
+            chatbot_mode (str): The chatbot mode ("tourism", "general", etc.)
+
+        Returns:
+            str: The generated context-based prompt.
+        """
+        if chatbot_mode.lower() == "tourism":
+            return self.generate_tourism_ctx_prompt(question, context)
+        return self.generate_ctx_prompt(question, context)

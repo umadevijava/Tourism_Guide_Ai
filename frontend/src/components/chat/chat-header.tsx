@@ -3,10 +3,11 @@ import { Bot, Plus, History, Settings } from "lucide-react"
 
 interface ChatHeaderProps {
   onNewChat: () => void
+  onHistoryClick: () => void
   disabled?: boolean
 }
 
-export function ChatHeader({ onNewChat, disabled }: ChatHeaderProps) {
+export function ChatHeader({ onNewChat, onHistoryClick, disabled }: ChatHeaderProps) {
   return (
     <header className="shrink-0 h-16 border-b border-border/50 bg-background/80 backdrop-blur-sm">
       <div className="h-full max-w-7xl mx-auto px-4 flex items-center justify-between">
@@ -19,8 +20,8 @@ export function ChatHeader({ onNewChat, disabled }: ChatHeaderProps) {
             </div>
           </div>
           <div>
-            <h1 className="font-semibold text-foreground tracking-tight">Autara AI</h1>
-            <p className="text-xs text-muted-foreground">Powered by llamacpp and Chroma</p>
+            <h1 className="font-semibold text-foreground tracking-tight">Tourism Guide AI</h1>
+            <p className="text-xs text-muted-foreground">AI-Powered Travel Planning & Research</p>
           </div>
         </div>
 
@@ -29,6 +30,7 @@ export function ChatHeader({ onNewChat, disabled }: ChatHeaderProps) {
           <Button
             variant="ghost"
             size="sm"
+            onClick={onHistoryClick}
             className="text-muted-foreground hover:text-foreground"
           >
             <History className="h-4 w-4 mr-2" />

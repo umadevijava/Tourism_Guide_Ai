@@ -56,6 +56,22 @@ export function DocumentUpload({
   }, [])
 
   const handleUploadFile = async (file: File) => {
+    // Validate file extension
+    const validExtensions = ['.pdf', '.docx', '.doc', '.txt', '.html', '.md']
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
+    
+    if (!validExtensions.includes(fileExtension)) {
+      onError(`File type '${fileExtension}' not supported. Allowed: ${validExtensions.join(', ')}`)
+      return
+    }
+
+    // Validate file size (max 50MB)
+    const maxFileSize = 50 * 1024 * 1024
+    if (file.size > maxFileSize) {
+      onError(`File size ${(file.size / 1024 / 1024).toFixed(1)}MB exceeds maximum of 50MB`)
+      return
+    }
+
     onUploadStart(file.name)
     try {
       const result = await uploadDocument(file, (pct) => {
@@ -69,11 +85,36 @@ export function DocumentUpload({
           filename: result.filename,
           size: file.size,
           content_type: file.type,
+          version_hash: '',
         },
       ])
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Upload failed"
-      onError(msg)
+      let errorMsg = "Upload failed"
+      if (err instanceof Error) {
+        errorMsg = err.message
+      } else if (typeof err === 'object' && err !== null && 'response' in err) {
+        const response = (err as any).response
+        if (response?.data?.detail) {
+          errorMsg = response.data.detail
+        } else if (response?.status === 409) {
+          errorMsg = "This document has already been uploaded"
+        } else if (response?.status === 400) {
+          errorMsg = "Invalid file or unsupported format"
+        } else if (response?.status === 500) {
+          errorMsg = "Server error processing document. Please check the server logs."
+        } else {
+          errorMsg = `Upload error: ${response?.status || 'Unknown'}`
+        }
+      } else if (typeof err === 'object' && err !== null && 'code' in err) {
+        const axiosErr = (err as any)
+        if (axiosErr.code === 'ECONNABORTED') {
+          errorMsg = "Upload timeout - the file took too long to process. Please try a smaller file."
+        } else {
+          errorMsg = axiosErr.message || "Network error during upload"
+        }
+      }
+      console.error('Upload error:', errorMsg, err)
+      onError(errorMsg)
     } finally {
       onUploadEnd()
     }
@@ -133,7 +174,7 @@ export function DocumentUpload({
           <input
             type="file"
             multiple
-            accept=".md,.txt,.pdf,.html"
+            accept=".md,.txt,.pdf,.html,.docx,.doc"
             onChange={handleFileInput}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
@@ -152,7 +193,7 @@ export function DocumentUpload({
                 Drag & drop files here
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                or click to browse &middot; .md .txt .pdf .html
+                or click to browse &middot; .pdf .docx .txt .html .md
               </p>
             </div>
           </div>

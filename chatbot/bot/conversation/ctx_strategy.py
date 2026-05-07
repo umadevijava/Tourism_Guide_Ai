@@ -20,16 +20,19 @@ class BaseSynthesisStrategy:
 
     Attributes:
         llm (LlmClient): The language model client used for generating responses.
+        chatbot_mode (str): The chatbot mode (e.g., "tourism", "general").
     """
 
-    def __init__(self, llm: LamaCppClient) -> None:
+    def __init__(self, llm: LamaCppClient, chatbot_mode: str = "general") -> None:
         """
         Initialize the synthesis strategy with the provided LlmClient.
 
         Args:
             llm (LlmClient): The language model client.
+            chatbot_mode (str): The chatbot mode for selecting appropriate templates.
         """
         self.llm = llm
+        self.chatbot_mode = chatbot_mode
 
     async def generate_response(self, retrieved_contents: list[Document], question: str, max_new_tokens: int = 512):
         """
@@ -53,8 +56,8 @@ class CreateAndRefineStrategy(BaseSynthesisStrategy):
     Strategy for sequential refinement of responses using retrieved contents.
     """
 
-    def __init__(self, llm: LamaCppClient):
-        super().__init__(llm)
+    def __init__(self, llm: LamaCppClient, chatbot_mode: str = "general"):
+        super().__init__(llm, chatbot_mode)
 
     async def generate_response(
         self, retrieved_contents: list[Document], question: str, max_new_tokens: int = 512
@@ -88,7 +91,9 @@ class CreateAndRefineStrategy(BaseSynthesisStrategy):
             context = node.page_content
             logger.debug(f"--- Context: '{context}' ... ---")
             if idx == 0:
-                fmt_prompt = self.llm.generate_ctx_prompt(question=question, context=context)
+                fmt_prompt = self.llm.generate_ctx_prompt_with_mode(
+                    question=question, context=context, chatbot_mode=self.chatbot_mode
+                )
             else:
                 fmt_prompt = self.llm.generate_refined_ctx_prompt(
                     context=context,
@@ -114,15 +119,17 @@ class TreeSummarizationStrategy(BaseSynthesisStrategy):
     Asynchronous version of TreeSummarizationStrategy.
     """
 
-    def __init__(self, llm: LamaCppClient):
-        super().__init__(llm)
+    def __init__(self, llm: LamaCppClient, chatbot_mode: str = "general"):
+        super().__init__(llm, chatbot_mode)
 
     async def generate_prompt_async(self, loop, question: str, content: Document, idx: int) -> tuple[int, str]:
         """Generate a single prompt asynchronously in thread pool."""
         logger.info(f"--- Generating a response for the chunk {idx} ... ---")
         context = content.page_content
-        # Run CPU-bound prompt generation in thread pool
-        fmt_qa_prompt = await loop.run_in_executor(None, self.llm.generate_ctx_prompt, question, context)
+        # Run CPU-bound prompt generation in thread pool with mode-aware template selection
+        fmt_qa_prompt = await loop.run_in_executor(
+            None, self.llm.generate_ctx_prompt_with_mode, question, context, self.chatbot_mode
+        )
         return idx, fmt_qa_prompt
 
     async def generate_batch_prompt_async(

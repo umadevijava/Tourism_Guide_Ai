@@ -40,18 +40,25 @@ class Settings(BaseSettings):
     # Retrieval Configuration
     EMBEDDING_MODEL: str = "all-MiniLM-L6-v2"
     SYNTHESIS_STRATEGY: str = "tree-summarization"
-    NUM_RETRIEVALS: int = 2
-    CHUNK_SIZE: int = 1000
+    NUM_RETRIEVALS: int = 3  # Reduced from 2 for faster retrieval
+    CHUNK_SIZE: int = 500  # Reduced from 1000 for faster processing
     CHUNK_OVERLAP: int = 50
+    
+    # Response optimization
+    MAX_CONTEXT_CHARS: int = 2000  # Limit context size to 2000 chars for faster LLM processing
+    RESPONSE_TIMEOUT_SECONDS: int = 60  # Timeout for long-running queries
 
     # Chat History Configuration
     CHAT_HISTORY_LENGTH: int = 2
+    
+    # Chatbot Mode Configuration (e.g., "tourism", "general")
+    CHATBOT_MODE: str = "general"
 
     # WebSocket Configuration
     WEBSOCKET_MAX_SIZE: int = 10 * 1024 * 1024  # 10 MB
 
     # File Upload Configuration
-    ALLOWED_UPLOAD_EXTENSIONS: list[str] = [".md"]
+    ALLOWED_UPLOAD_EXTENSIONS: list[str] = [".md", ".pdf", ".docx", ".txt", ".html", ".doc"]
 
 
 settings = Settings()
