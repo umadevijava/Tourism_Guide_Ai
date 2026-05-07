@@ -6,7 +6,6 @@ import {
   updateSessionTitle,
   createNewSession,
   clearAllHistory,
-  type ChatSessionListResponse,
   type ChatHistoryResponse,
   type ChatSessionSummary,
 } from '../services/api';

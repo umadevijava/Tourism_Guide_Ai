@@ -88,13 +88,23 @@ export class ChatWebSocket {
             this.sessionId = data.sessionId;
             this.onSessionId(data.sessionId);
             console.log('✓ Received sessionId:', data.sessionId);
+          } else if (data.error) {
+            // Handle JSON error objects
+            this.onError(data.error);
           } else {
             // Other JSON messages are treated as tokens
             this.onToken(JSON.stringify(data));
           }
         } catch {
           // Not JSON, treat as text token
-          this.onToken(event.data as string);
+          // Filter out error text messages that might have been sent after streaming completed
+          const text = event.data as string;
+          if (text && !text.toLowerCase().includes('error during')) {
+            this.onToken(text);
+          } else if (text.toLowerCase().includes('error during')) {
+            // Only treat as error if it appears to be a genuine error message
+            console.debug('Filtering out potential post-stream error message:', text);
+          }
         }
       };
 

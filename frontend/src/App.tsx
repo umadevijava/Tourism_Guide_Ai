@@ -7,7 +7,7 @@ import { useDocuments } from '@/hooks/useDocuments';
 
 function App() {
   const { messages: rawMessages, isStreaming, sessionId, sendMessage, clearMessages, loadHistoryMessages } = useChat();
-  const { sessions, currentSession, loading: historyLoading, error: historyError, fetchSessions, loadSession, createSession, removeSession, updateTitle, clearHistory } = useChatHistory();
+  const { sessions, currentSession, loading: historyLoading, error: historyError, loadSession, createSession, removeSession, clearHistory } = useChatHistory();
   const { documents, uploading, error: docError, setDocuments, setUploading, setError } = useDocuments();
 
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
