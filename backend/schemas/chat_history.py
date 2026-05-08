@@ -20,6 +20,8 @@ class ChatMessage(SQLModel, table=True):
         timestamp: When the message was created
         rag_mode: Whether RAG was enabled for this message
     """
+    __tablename__ = "chat_messages"
+    
     id: Optional[str] = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     session_id: str = Field(index=True)
     question: str
@@ -28,9 +30,6 @@ class ChatMessage(SQLModel, table=True):
     rag_mode: bool = False
     reasoning_mode: bool = False
     web_search_mode: bool = False
-
-    class Config:
-        table_name = "chat_messages"
 
 
 class ChatSession(SQLModel, table=True):
@@ -44,11 +43,10 @@ class ChatSession(SQLModel, table=True):
         message_count: Total messages in session
         title: Optional custom session title
     """
-    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    __tablename__ = "chat_sessions"
+    
+    session_id: str = Field(primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     message_count: int = 0
     title: Optional[str] = None
-
-    class Config:
-        table_name = "chat_sessions"

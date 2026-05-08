@@ -12,6 +12,7 @@ from backend.api.services.chat_stream import stream_chat_response, stream_rag_re
 from backend.api.services.chat_history import ChatHistoryService
 from backend.core.config import settings
 from backend.schemas.chat import ChatRequest
+from chatbot.bot.conversation.conversation_handler import extract_content_after_reasoning
 from chatbot.helpers.log import get_logger
 
 logger = get_logger(__name__)
@@ -239,21 +240,65 @@ async def stream_google_search_response_with_history(
     try:
         start_time = time.time()
         full_response = ""
+        has_sent_tokens = False
+        max_tokens = settings.MAX_NEW_TOKENS
         
-        # For now, delegate to the original function
-        # In the future, we can enhance this
+        # Import the original google search function
         from backend.api.services.chat_stream import stream_google_search_response as original_google_search
         
-        # We need to capture the response, so this is a simplified version
-        logger.info(f"Google search initiated for session {session_id}")
-        await websocket.send_text("[Google Search Mode] Searching for relevant information...")
+        # Create a custom websocket wrapper to capture the response
+        class ResponseCapturingWebSocket:
+            def __init__(self, ws):
+                self.ws = ws
+                self.response = ""
+            
+            async def send_text(self, text: str):
+                nonlocal full_response, has_sent_tokens
+                full_response += text
+                has_sent_tokens = True
+                await self.ws.send_text(text)
+            
+            async def send_json(self, data):
+                nonlocal has_sent_tokens
+                has_sent_tokens = True
+                await self.ws.send_json(data)
         
+        capturing_ws = ResponseCapturingWebSocket(websocket)
+        
+        # Call the original google search streaming function
+        await original_google_search(capturing_ws, llm_client, query, chat_history)
+        
+        # Extract final answer from full response
+        if llm_client.model_settings.reasoning:
+            final_answer = extract_content_after_reasoning(
+                full_response,
+                llm_client.model_settings.reasoning_stop_tag
+            )
+            if final_answer == "":
+                final_answer = "I wasn't able to provide the answer with web search; please try again."
+        else:
+            final_answer = full_response if full_response else "No results found."
+        
+        # Save to database
+        ChatHistoryService.save_message(
+            session_id=session_id,
+            question=query.text,
+            answer=final_answer,
+            db_session=db_session,
+            rag_mode=False,
+            reasoning_mode=query.reasoning,
+            web_search_mode=True,
+        )
+        
+        chat_history.append(f"question: {query.text}, answer: {final_answer}")
         took = time.time() - start_time
-        logger.info(f"Google search completed in {took:.2f}s")
+        logger.info(f"Google search completed in {took:.2f}s, saved to session {session_id}")
         
     except Exception as exc:
         logger.exception("Error during Google search: %s", exc)
-        try:
-            await websocket.send_text("Error during Google search.")
-        except Exception:
-            pass
+        # Only send error message if we haven't sent any tokens yet
+        if not has_sent_tokens:
+            try:
+                await websocket.send_json({"error": "Error during Google search."})
+            except Exception:
+                pass
