@@ -185,8 +185,6 @@ async def stream_rag_response(
                 await websocket.send_json({"error": "Error during RAG streaming."})
             except Exception:
                 pass  # Connection may be closed
-        except Exception:
-            pass  # Connection may be closed
 
 
 async def stream_google_search_response(
